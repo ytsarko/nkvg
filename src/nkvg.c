@@ -23,13 +23,19 @@
 #include "nkvg.h"
 #include "nkvg-render.h"
 
+#ifdef _WIN32
+#include <malloc.h>
+#else
 #include <alloca.h>
+#endif
 #include <assert.h>
 #include <errno.h>
 
-#include <GL/gl3w.h>
+#if NKVG_USE_GLEW
+#include <glew.h>
+#endif
 
-#define NANOVG_GL3_IMPLEMENTATION
+#define NANOVG_GL2_IMPLEMENTATION
 #include <nanovg_gl.h>
 
 #define COMMAND_BUFFER_SIZE (4 * 1024)
@@ -171,7 +177,7 @@ end:
 
 static int nk_vg_device_create(struct nk_vg_context *ctx)
 {
-    ctx->nvg_context = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    ctx->nvg_context = nvgCreateGL2(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
     if (!ctx->nvg_context) {
         return 1;
     }
@@ -188,7 +194,7 @@ static int nk_vg_device_create(struct nk_vg_context *ctx)
     return 0;
 
 err:
-    nvgDeleteGL3(ctx->nvg_context);
+    nvgDeleteGL2(ctx->nvg_context);
 
     return ret;
 }
@@ -197,5 +203,5 @@ static void nk_vg_device_destroy(struct nk_vg_context *ctx)
 {
     free(ctx->commands_buffer.memory.ptr);
     nk_buffer_free(&ctx->commands_buffer);
-    nvgDeleteGL3(ctx->nvg_context);
+    nvgDeleteGL2(ctx->nvg_context);
 }
