@@ -2,7 +2,9 @@ project(nkvg)
 
 set(SOURCES
     nkvg.c
+    nkvg-render.c
     nuklear-impl.c
+    font-registry.c
     nanovg/src/nanovg.c
 )
 
@@ -10,7 +12,7 @@ add_library(${PROJECT_NAME} ${SOURCES})
 
 add_definitions(
     -std=c99
-    -pedantic
+    #-pedantic
     -Wall
     -Wno-unused-but-set-variable
     -Wno-unused-function

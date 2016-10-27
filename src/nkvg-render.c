@@ -21,6 +21,9 @@
  */
 
 #include "nkvg-render.h"
+#include "font-registry.h"
+
+#include <assert.h>
 
 void nk_nanovg_render(struct nk_vg *nkvg, int w, int h)
 {
@@ -29,7 +32,7 @@ void nk_nanovg_render(struct nk_vg *nkvg, int w, int h)
 
     nvgBeginFrame(nvg_context, w, h, 1.0f);
 
-    nk_foreach(cmd, nk_sdl->ctx)
+    nk_foreach(cmd, nkvg->nk_ctx)
     {
         switch (cmd->type) {
         case NK_COMMAND_SCISSOR: {
@@ -152,7 +155,7 @@ void nk_nanovg_render(struct nk_vg *nkvg, int w, int h)
         case NK_COMMAND_NOP:
             break;
         case NK_COMMAND_IMAGE:
-            printf("unimplemented nk_command_xxx: %d\n", cmd->type);
+            // fprintf(stderr, "unimplemented nk_command_xxx: %d\n", cmd->type);
         default:
             break;
         }
@@ -323,18 +326,17 @@ void nk_nanovg_draw_text(NVGcontext *nvgctx, int x, int y, int w, int h,
                          const char *text, int length, nk_handle handle,
                          struct nk_color bg, struct nk_color fg)
 {
-    struct user_font *fnt = (struct user_font *)handle.ptr;
+    struct font_description *desc = (struct font_description*)handle.ptr;
+    assert(desc);
 
     nvgBeginPath(nvgctx);
     nvgFillColor(nvgctx, nvgRGBA(bg.r, bg.g, bg.b, bg.a));
     nvgRect(nvgctx, x, y, w, h);
     nvgFill(nvgctx);
     nvgFillColor(nvgctx, nvgRGBA(fg.r, fg.g, fg.b, fg.a));
-    nvgFontSize(nvgctx, font_pixel_size(fnt));
+    nvgFontSize(nvgctx, desc->height);
     nvgFontFace(nvgctx, "default");
     nvgTextAlign(nvgctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
     float bounds[4];
-    float tw = nvgTextBounds(nvgctx, x, y, text, text + length, bounds);
-    float th = bounds[3] - bounds[1];
-    nvgText(nvgctx, x, y /*+ (h + th) * 0.5f*/, text, text + length);
+    nvgText(nvgctx, x, y, text, text + length);
 }

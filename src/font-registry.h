@@ -9,8 +9,7 @@
  * furnished to do so, subject to the following conditions:
 
  * The above copyright notice and this permission notice shall be included in
- all
- * copies or substantial portions of the Software.
+ * all copies or substantial portions of the Software.
 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
@@ -21,47 +20,33 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef NKVG_H
-#define NKVG_H
+#ifndef FONT_REGISTRY_H
+#define FONT_REGISTRY_H
 
 #pragma once
 
-#include <nanovg.h>
-
-#include "nuklear.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct font_registry;
 
-struct nk_vg_context {
-    struct nk_buffer commands_buffer;
-    NVGcontext *nvg_context;
-    struct font_registry *font_registry;
+struct font_description {
+    /* User-defined id of font*/
+    const char *id;
+
+    struct NVGcontext *nvgctx;
+
+    /* NanoVG font handle */
+    int handle;
+
+    /* Default size */
+    int height;
 };
 
-struct nk_vg {
-    struct nk_vg_context *nkvg_ctx;
-    struct nk_context *nk_ctx;
-};
+int font_registry_create(struct NVGcontext *nvgctx, struct font_registry **out);
+void font_registry_destroy(struct font_registry **out);
 
-int nk_vg_create(struct nk_context *nk_ctx, struct nk_vg **out);
-void nk_vg_destroy(struct nk_vg **nkvg);
+int font_registry_add_font(struct font_registry *registry, const char *id,
+                           int handle, int default_height);
 
-NVGcontext *nk_vg_context(struct nk_vg *nkvg);
+struct font_description *font_registry_find_font(struct font_registry *registry,
+                                                 const char *id);
 
-int nk_vg_add_font(struct nk_vg *nkvg, const char *id, const char *filename,
-                   int default_height);
-
-int nk_vg_font(struct nk_vg *nkvg, const char *id,
-               struct nk_user_font *user_font);
-
-void nk_vg_render(struct nk_vg *nkvg, struct nk_color bg, int w, int h);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* NKVG_H */
+#endif /* FONT_REGISTRY_H */

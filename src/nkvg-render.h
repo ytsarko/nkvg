@@ -29,6 +29,10 @@
 
 #include <nanovg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void nk_nanovg_render(struct nk_vg *nkvg, int w, int h);
 
 void nk_nanovg_scissor(NVGcontext *nvgctx, int x, int y, int w, int h);
@@ -87,5 +91,9 @@ void nk_nanovg_stroke_polyline(NVGcontext *nvgctx,
 void nk_nanovg_draw_text(NVGcontext *nvgctx, int x, int y, int w, int h,
                          const char *text, int length, nk_handle handle,
                          struct nk_color bg, struct nk_color fg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NKVG_RENDER_H */

@@ -21,6 +21,7 @@
  */
 
 #include "nkvg.h"
+#include "font-registry.h"
 #include "nkvg-render.h"
 
 #ifdef _WIN32
@@ -40,13 +41,11 @@
 
 #define COMMAND_BUFFER_SIZE (4 * 1024)
 
-struct nk_vg_context {
-    struct nk_buffer commands_buffer;
-    NVGcontext *nvg_context;
-};
-
 static int nk_vg_device_create(struct nk_vg_context *ctx);
 static void nk_vg_device_destroy(struct nk_vg_context *ctx);
+
+static float measure_text_width(nk_handle font, float h, const char *text,
+                                int len);
 
 int nk_vg_create(struct nk_context *nk_ctx, struct nk_vg **out)
 {
@@ -56,6 +55,7 @@ int nk_vg_create(struct nk_context *nk_ctx, struct nk_vg **out)
     int retval                      = 0;
     struct nk_vg *nk_vg             = 0;
     struct nk_vg_context *nk_vg_ctx = 0;
+    struct font_registry *font_registry = 0;
 
     nk_vg = calloc(1, sizeof(*nk_vg));
     if (!nk_vg) {
@@ -73,6 +73,12 @@ int nk_vg_create(struct nk_context *nk_ctx, struct nk_vg **out)
         goto err;
     }
 
+    retval = font_registry_create(nk_vg_ctx->nvg_context, &font_registry);
+    if (retval != 0) {
+        goto err;
+    }
+
+    nk_vg_ctx->font_registry = font_registry;
     nk_vg->nkvg_ctx = nk_vg_ctx;
     nk_vg->nk_ctx   = nk_ctx;
 
@@ -82,6 +88,10 @@ int nk_vg_create(struct nk_context *nk_ctx, struct nk_vg **out)
 
 err:
     *out = 0;
+
+    if (font_registry) {
+        font_registry_destroy(&font_registry);
+    }
 
     if (nk_vg_ctx) {
         free(nk_vg_ctx);
@@ -98,10 +108,28 @@ void nk_vg_destroy(struct nk_vg **nkvg)
 {
     assert(nkvg);
 
+    font_registry_destroy(&((*nkvg)->nkvg_ctx->font_registry));
+
     nk_vg_device_destroy((*nkvg)->nkvg_ctx);
+    free((*nkvg)->nkvg_ctx);
     free(*nkvg);
 
     *nkvg = 0;
+}
+
+static float measure_text_width(nk_handle font, float h, const char *text,
+                                int len)
+{
+    assert(text);
+    assert(len >= 0);
+
+    struct font_description *desc = (struct font_description*)font.ptr;
+    assert(desc);
+
+    nvgFontSize(desc->nvgctx, h);
+    nvgFontFace(desc->nvgctx, desc->id);
+    float bounds[4];
+    return nvgTextBounds(desc->nvgctx, 0.0f, 0.0f, text, text + len, bounds);
 }
 
 NVGcontext *nk_vg_context(struct nk_vg *nkvg)
@@ -110,11 +138,50 @@ NVGcontext *nk_vg_context(struct nk_vg *nkvg)
     return nkvg->nkvg_ctx->nvg_context;
 }
 
-int nk_vg_add_font(struct nk_vg *nkvg, const char *id, const char *filename)
+int nk_vg_add_font(struct nk_vg *nkvg, const char *id, const char *filename,
+                   int default_height)
 {
-    int ret = nvgCreateFont(nkvg->nkvg_ctx->nvg_context, id, filename);
+    assert(nkvg);
+    assert(id);
+    assert(filename);
+    assert(default_height > 0);
 
-    return ret;
+    int ret = nvgCreateFont(nkvg->nkvg_ctx->nvg_context, id, filename);
+    if (ret == -1) {
+        return 1;
+    }
+
+    ret = font_registry_add_font(nkvg->nkvg_ctx->font_registry, id, ret,
+                                 default_height);
+    if (ret != 0) {
+        return 1;
+    }
+
+    return 0;
+}
+
+int nk_vg_font(struct nk_vg *nkvg, const char *id,
+               struct nk_user_font *user_font)
+{
+    assert(nkvg);
+    assert(id);
+    assert(user_font);
+
+    struct font_description *desc =
+        font_registry_find_font(nkvg->nkvg_ctx->font_registry, id);
+    if (!desc) {
+        return 1;
+    }
+
+    struct nk_user_font ret = {
+        .userdata = nk_handle_ptr(desc),
+        .height   = desc->height,
+        .width    = measure_text_width,
+    };
+
+    *user_font = ret;
+
+    return 0;
 }
 
 void nk_vg_render(struct nk_vg *nkvg, struct nk_color bg, int w, int h)
