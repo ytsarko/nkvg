@@ -147,15 +147,16 @@ void nk_nanovg_render(struct nk_vg *nkvg, int w, int h)
         case NK_COMMAND_TEXT: {
             const struct nk_command_text *t =
                 (const struct nk_command_text *)cmd;
-            nk_nanovg_draw_text(
-                nvg_context, t->x, t->y, t->w, t->h, (const char *)t->string,
-                t->length, t->font->userdata, t->background, t->foreground);
+            nk_nanovg_draw_text(nvg_context, t->font, t->x, t->y, t->w, t->h,
+                                (const char *)t->string, t->length,
+                                t->font->userdata, t->background,
+                                t->foreground);
         } break;
 
         case NK_COMMAND_NOP:
             break;
         case NK_COMMAND_IMAGE:
-            // fprintf(stderr, "unimplemented nk_command_xxx: %d\n", cmd->type);
+        // fprintf(stderr, "unimplemented nk_command_xxx: %d\n", cmd->type);
         default:
             break;
         }
@@ -322,19 +323,17 @@ void nk_nanovg_stroke_polyline(NVGcontext *nvgctx,
     /* TODO: implement*/
 }
 
-void nk_nanovg_draw_text(NVGcontext *nvgctx, int x, int y, int w, int h,
-                         const char *text, int length, nk_handle handle,
-                         struct nk_color bg, struct nk_color fg)
+void nk_nanovg_draw_text(NVGcontext *nvgctx, const struct nk_user_font *font,
+                         int x, int y, int w, int h, const char *text,
+                         int length, nk_handle handle, struct nk_color bg,
+                         struct nk_color fg)
 {
-    struct font_description *desc = (struct font_description*)handle.ptr;
-    assert(desc);
-
     nvgBeginPath(nvgctx);
     nvgFillColor(nvgctx, nvgRGBA(bg.r, bg.g, bg.b, bg.a));
     nvgRect(nvgctx, x, y, w, h);
     nvgFill(nvgctx);
     nvgFillColor(nvgctx, nvgRGBA(fg.r, fg.g, fg.b, fg.a));
-    nvgFontSize(nvgctx, desc->height);
+    nvgFontSize(nvgctx, font->height);
     nvgFontFace(nvgctx, "default");
     nvgTextAlign(nvgctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
     float bounds[4];

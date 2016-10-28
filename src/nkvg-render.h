@@ -88,9 +88,10 @@ void nk_nanovg_stroke_polyline(NVGcontext *nvgctx,
                                const struct nk_vec2i *points, int point_count,
                                int thickness, struct nk_color color);
 
-void nk_nanovg_draw_text(NVGcontext *nvgctx, int x, int y, int w, int h,
-                         const char *text, int length, nk_handle handle,
-                         struct nk_color bg, struct nk_color fg);
+void nk_nanovg_draw_text(NVGcontext *nvgctx, const struct nk_user_font *font,
+                         int x, int y, int w, int h, const char *text,
+                         int length, nk_handle handle, struct nk_color bg,
+                         struct nk_color fg);
 
 #ifdef __cplusplus
 }
