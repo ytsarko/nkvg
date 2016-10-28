@@ -32,6 +32,7 @@ if(UNIX)
 
     add_definitions(
         -D_POSIX_C_SOURCE=199309L
+        -DFONS_USE_FREETYPE
     )
 
     target_include_directories(${PROJECT_NAME} PRIVATE
@@ -47,14 +48,11 @@ if(UNIX)
     )
 elseif(WIN32)
     find_package(Glew)
+
     target_include_directories(${PROJECT_NAME} PRIVATE
         .
         ./nanovg/src/
         ${GLEW_INCLUDE_DIRS}
-    )
-
-    target_link_libraries(${PROJECT_NAME}
-        #${GLEW_LIBRARIES}
     )
 endif(UNIX)
 
