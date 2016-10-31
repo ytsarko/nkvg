@@ -328,13 +328,16 @@ void nk_nanovg_draw_text(NVGcontext *nvgctx, const struct nk_user_font *font,
                          int length, nk_handle handle, struct nk_color bg,
                          struct nk_color fg)
 {
+    struct font_description *desc = (struct font_description*)font->userdata.ptr;
+    assert(desc);
+
     nvgBeginPath(nvgctx);
-    nvgFillColor(nvgctx, nvgRGBA(bg.r, bg.g, bg.b, bg.a));
-    nvgRect(nvgctx, x, y, w, h);
-    nvgFill(nvgctx);
+    // nvgFillColor(nvgctx, nvgRGBA(bg.r, bg.g, bg.b, bg.a));
+    // nvgRect(nvgctx, x, y, w, h);
+    // nvgFill(nvgctx);
     nvgFillColor(nvgctx, nvgRGBA(fg.r, fg.g, fg.b, fg.a));
     nvgFontSize(nvgctx, font->height);
-    nvgFontFace(nvgctx, "default");
+    nvgFontFace(nvgctx, desc->id);
     nvgTextAlign(nvgctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
     float bounds[4];
     nvgText(nvgctx, x, y, text, text + length);
