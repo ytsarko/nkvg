@@ -180,7 +180,7 @@ void fons__tt_getFontVMetrics(FONSttFontImpl *font, int *ascent, int *descent, i
 
 float fons__tt_getPixelHeightScale(FONSttFontImpl *font, float size)
 {
-	return size / (font->font->ascender - font->font->descender);
+	return 100.0f/72.0f;
 }
 
 int fons__tt_getGlyphIndex(FONSttFontImpl *font, int codepoint)
@@ -196,14 +196,14 @@ int fons__tt_buildGlyphBitmap(FONSttFontImpl *font, int glyph, float size, float
 	FT_Fixed advFixed;
 	FONS_NOTUSED(scale);
 
-	ftError = FT_Set_Pixel_Sizes(font->font, 0, (FT_UInt)(size * (float)font->font->units_per_EM / (float)(font->font->ascender - font->font->descender)));
+	ftError = FT_Set_Pixel_Sizes(font->font, 0, (FT_UInt)((float)size * 100.0f / 72.0f));
 	if (ftError) return 0;
 	ftError = FT_Load_Glyph(font->font, glyph, FT_LOAD_RENDER);
 	if (ftError) return 0;
 	ftError = FT_Get_Advance(font->font, glyph, FT_LOAD_NO_SCALE, &advFixed);
 	if (ftError) return 0;
 	ftGlyph = font->font->glyph;
-	*advance = (int)advFixed;
+	*advance = ftGlyph->metrics.horiAdvance >> 6;
 	*lsb = (int)ftGlyph->metrics.horiBearingX;
 	*x0 = ftGlyph->bitmap_left;
 	*x1 = *x0 + ftGlyph->bitmap.width;
@@ -1090,7 +1090,7 @@ static FONSglyph* fons__getGlyph(FONScontext* stash, FONSfont* font, unsigned in
 	glyph->y0 = (short)gy;
 	glyph->x1 = (short)(glyph->x0+gw);
 	glyph->y1 = (short)(glyph->y0+gh);
-	glyph->xadv = (short)(scale * advance * 10.0f);
+	glyph->xadv = (short)advance;
 	glyph->xoff = (short)(x0 - pad);
 	glyph->yoff = (short)(y0 - pad);
 	glyph->next = 0;
@@ -1188,7 +1188,7 @@ static void fons__getQuad(FONScontext* stash, FONSfont* font,
 		q->t1 = y1 * stash->ith;
 	}
 
-	*x += (int)(glyph->xadv / 10.0f + 0.5f);
+	*x += (int)(glyph->xadv + 0.5f);
 }
 
 static void fons__flush(FONScontext* stash)
@@ -1226,7 +1226,7 @@ static float fons__getVertAlign(FONScontext* stash, FONSfont* font, int align, s
 {
 	if (stash->params.flags & FONS_ZERO_TOPLEFT) {
 		if (align & FONS_ALIGN_TOP) {
-			return font->ascender * (float)isize/10.0f;
+			return font->ascender * (float)isize/10.0f * 100.0f / 72.0f;
 		} else if (align & FONS_ALIGN_MIDDLE) {
 			return (font->ascender + font->descender) / 2.0f * (float)isize/10.0f;
 		} else if (align & FONS_ALIGN_BASELINE) {
